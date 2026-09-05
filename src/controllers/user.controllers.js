@@ -17,6 +17,7 @@ const registerUser = asyncHandler(async(req,res) =>{
       //return res
       
       const {fullName,email,username,password}=req.body
+      console.log("body",req.body)
       console.log("email",email);
 
       // To handle  api error 
@@ -26,44 +27,44 @@ const registerUser = asyncHandler(async(req,res) =>{
       // } 
       //diffrent method 
       if(
-        [fullName,email,username,password].some((field) => field?.trim() === "")
+        [fullName,email,username,password].some((field) => !field || field?.trim() === "")
       ) {
         throw new ApiError(400, "All fields are required")
       }
-      const existedUser = User.findOne({
-        $or: [ {username},{email}]
+      const existedUser = await User.findOne({
+        $or: [{username},{email}]
       })
       if(existedUser) {
         throw new ApiError(409, "username or email is already exist")
       }
 
-      const avatarLocalPath = req.files?.avatar[0]?.path;
-      const coverImageLocalPath=req.files?.coverImage[0]?.path;
+      const avtarLocalPath = req.files?.avtar?.[0]?.path;
+      const coverImageLocalPath=req.files?.coverImage?.[0]?.path;
 
-      if(!avatarLocalPath){
+      if(!avtarLocalPath){
         throw new ApiError(400, "Avatar file is required")
       }
 
       //Method to upload on the cloudnary
 
-     const avatar =   await uploadOnCloudnary(avatarLocalPath)
+     const avtar =   await uploadOnCloudnary(avtarLocalPath)
      const coverImage = await uploadOnCloudnary(coverImageLocalPath)
 
-     if(!avatar) {
-      throw new ApiError(400, "Avatar file is required")
+     if(!avtar) {
+      throw new ApiError(400, "Avtar file is required")
      }
 
      //entry on database
      const user = await User.create({
       fullName,
-      avatar:avatar.url,
+      avtar:avtar.url,
       coverImage: coverImage?.url || " ",
       email,
       password,
       username: username.toLowerCase()
      })
 
-    const created =  await User.findbyId(user._id).select(
+    const createdUser =  await User.findById(user._id).select(
       "-password -refreshToken"
     )
 
