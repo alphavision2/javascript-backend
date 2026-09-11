@@ -121,8 +121,14 @@ const registerUser = asyncHandler(async(req,res) =>{
         if(!user) {
           throw new ApiError(404, "User does not exist")
         }
+        console.log("email", email)
+        console.log("password revieved", password)
+        console.log("user found", user)
+        console.log("stored password", user.password)
 
         const isPasswordValid = await user.isPasswordCorrect(password)
+
+        console.log("password valid.", isPasswordValid);
 
         if(!isPasswordValid){
           throw new ApiError(401,"Invalid user credential")
@@ -130,7 +136,7 @@ const registerUser = asyncHandler(async(req,res) =>{
 
        const {accessToken,refreshToken} =  await generateAccessAndRefreshToken(user._id)
 
-       const loggedInUser = User.findById(user._id).select("-password -refreshToken")
+       const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
        // send cookkie
        const options = {
@@ -146,7 +152,7 @@ const registerUser = asyncHandler(async(req,res) =>{
         new ApiResponse(
           200,
           {
-            user:loggedInUser, accessToken, refreshToken
+            user:[loggedInUser, accessToken, refreshToken]
           },
           "user logIn successfully"
         )
@@ -347,7 +353,7 @@ try {
 
   // AGGREGATION PIPELINE FOR COUNT SUBCIBED AND SUBCRIBER
 
-  const getUserChaannelProfile = asyncHandler(async(req,res) => {
+  const getUserChannelProfile = asyncHandler(async(req,res) => {
       const {username} = req.params
 
       if(!username?.trim()){
@@ -482,11 +488,12 @@ export  {
         loginUser,
         logoutUser,
         refreshAccessToken,
+        changeCurrentPassword,
         getCurrentUser,
         updateAccountDetail,
         updateUserAvatar,
         updateUserCoverImage,
-        getUserChaannelProfile,
+        getUserChannelProfile,
         getWatchHistory
 
   }
